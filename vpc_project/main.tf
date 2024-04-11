@@ -97,3 +97,52 @@ resource "aws_instance" "myserver2" {
   user_data = base64encode(file("userdata2.sh"))
 }
 
+resource "aws_lb" "lb" {
+  name = "web-load-balancer"
+  load_balancer_type = "application"
+  security_groups = [aws_security_group.allow_tls.id]
+  subnets = [aws_subnet.subnet1.id, aws_subnet.subnet2.id]
+
+  tags = {
+    Name = "Web"
+  }
+}
+
+
+resource "aws_alb_target_group" "web_target" {
+  name = "web-target-group"
+  port = 80
+  protocol = "HTTP"
+  vpc_id = aws_vpc.myvpc.id
+  health_check {
+    path = "/"
+    port = "traffic-port"
+  }
+}
+
+resource "aws_lb_target_group_attachment" "tg-attachment1" {
+  target_group_arn = aws_alb_target_group.web_target.arn
+  target_id = aws_instance.myserver1.id
+  port = 80
+}
+
+resource "aws_lb_target_group_attachment" "tg-attachment2" {
+  target_group_arn = aws_alb_target_group.web_target.arn
+  target_id = aws_instance.myserver2.id
+  port = 80
+}
+
+resource "aws_lb_listener" "listener" {
+  load_balancer_arn = aws_lb.lb.arn
+  port = 80
+  protocol = "HTTP"
+
+  default_action {
+    target_group_arn = aws_alb_target_group.web_target.arn
+    type = "forward"
+  }
+}
+
+output "loadbalancerdns" {
+  value = aws_lb.lb.dns_name
+}
