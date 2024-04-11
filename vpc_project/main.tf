@@ -81,6 +81,19 @@ resource "aws_s3_bucket" "example" {
 }
 
 
+resource "aws_instance" "myserver1" {
+  ami = "ami-080e1f13689e07408"
+  instance_type = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.allow_tls.id]
+  subnet_id = aws_subnet.subnet1.id
+  user_data = base64encode(file("userdata.sh"))
+}
 
-
+resource "aws_instance" "myserver2" {
+  ami = "ami-080e1f13689e07408"
+  instance_type = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.allow_tls.id]
+  subnet_id = aws_subnet.subnet2.id
+  user_data = base64encode(file("userdata2.sh"))
+}
 
